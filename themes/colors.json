@@ -1,0 +1,19 @@
+{
+  "name": "Cores",
+  "pairs": [
+    ["cor", "いろ"],
+    ["branco", "しろ"],
+    ["preto", "くろ"],
+    ["vermelho", "あか"],
+    ["azul", "あお"],
+    ["verde", "みどり"],
+    ["roxo", "むらさき"],
+    ["amarelo", "きいろ"],
+    ["marrom", "ちゃいろ"],
+    ["dourado", "きんいろ"],
+    ["prateado", "ぎんいろ"],
+    ["rosa", "ももいろ"],
+    ["cinza", "はいいろ"],
+    ["laranja", "だいだいいろ"]
+  ]
+}

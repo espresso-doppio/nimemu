@@ -1,0 +1,26 @@
+{
+  "name": "Alimentos",
+  "pairs": [
+    ["arroz", "ごはん"],
+    ["pão", "パン"],
+    ["macarrão", "めん"],
+    ["carne", "にく"],
+    ["bife", "ぎゅうにく"],
+    ["frango", "とりにく"],
+    ["peixe", "さかな"],
+    ["ovo", "たまご"],
+    ["vegetal", "やさい"],
+    ["fruta", "くだもの"],
+    ["leite", "ぎゅうにゅう"],
+    ["queijo", "チーズ"],
+    ["manteiga", "バター"],
+    ["chocolate", "チョコレート"],
+    ["bolo", "ケーキ"],
+    ["sorvete", "アイスクリーム"],
+    ["batata", "じゃがいも"],
+    ["maçã", "りんご"],
+    ["repolho", "キャベツ"],
+    ["alga", "のり"],
+    ["bolinho de arroz", "おにぎり"]
+  ]
+}

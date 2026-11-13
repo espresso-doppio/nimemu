@@ -1,0 +1,33 @@
+{
+  "name": "Música",
+  "pairs": [
+["música", "おんがく"],
+["canção", "うた"],
+["violão", "ギター"],
+["bateria", "ドラムセット"],
+["tambor japonês", "たいこ"],
+["piano", "ピアノ"],
+["teclado", "キーボード"],
+["violino", "バイオリン"],
+["harpa", "ハープ"],
+["banjo", "バンジョー"],
+["baixo", "ベース"],
+["guitarra", "エレキギター"],
+["flauta", "フルート"],
+["cantor", "かしゅ"],
+["melodia", "メロディー"],
+["dança", "ダンス"],
+["ritmo", "リズム"],
+["som", "おと"],
+["nota musical", "おんぷ"],
+["trilha sonora", "サウンドトラック"],
+["show", "コンサート"],
+["canção de ninar", "こもりうた"],
+["acústico", "アコースティック"],
+["compositor", "さっきょくか"],
+["letra", "かし"],
+["timbre", "ねいろ"],
+["orquestra", "オーケストラ"],
+["maestro", "しき"]
+  ]
+}

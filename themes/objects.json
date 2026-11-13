@@ -1,0 +1,27 @@
+{
+  "name": "Objetos",
+  "pairs": [
+["telefone", "でんわ"],
+["chave", "かぎ"],
+["computador", "コンピューター"],
+["lápis", "えんぴつ"],
+["caneta", "ペン"],
+["videogame", "ゲーム"],
+["copo", "コップ"],
+["caneca", "マグカップ"],
+["livro", "ほん"],
+["escova de dentes", "はぶらし"],
+["carteira", "さいふ"],
+["bolsa", "かばん"],
+["cadeira", "いす"],
+["caderno", "ノート"],
+["relógio", "とけい"],
+["lâmpada", "ランプ"],
+["espelho", "かがみ"],
+["toalha", "タオル"],
+["violão", "ギター"],
+["tigela", "ボウル"],
+["colher", "スプーン"],
+["celular", "ケータイ"]
+  ]
+}
