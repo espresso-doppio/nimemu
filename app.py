@@ -37,7 +37,7 @@ def get_themes() -> list[str]:
 
 
 # ---- Setup ----
-st.set_page_config(page_title="メモリーゲーム", page_icon="🎴", layout="centered")
+st.set_page_config(page_title="ニメム", page_icon="🎴", layout="centered")
 
 
 st.title("メモリーゲーム", width="stretch", text_alignment="center")
