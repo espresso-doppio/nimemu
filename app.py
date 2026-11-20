@@ -1,19 +1,20 @@
+import copy
 import json
 import random
 import time
+from collections import deque
+from pathlib import Path
 import streamlit as st
 import themeutils
-from pathlib import Path
-from collections import deque
 from load_css import load_css
 
 load_css()
 
 @st.cache_data
 def load_themes() -> dict[str, list[tuple[str, str]]]:
-    THEMES_DIR = Path(__file__).parent / "themes"
-    themes = {}
-    for path in sorted(THEMES_DIR.glob("*.json")):
+    themes_dir = Path(__file__).parent / "themes"
+    themes: dict[str, list[tuple[str, str]]] = {}
+    for path in sorted(themes_dir.glob("*.json")):
         data = json.loads(path.read_text(encoding="utf-8"))
         themes[data["name"]] = [tuple(p) for p in data["pairs"]]
     return themes
@@ -25,20 +26,14 @@ if "configs" not in st.session_state:
     st.session_state.min_pairs = 4
     st.session_state.max_pairs = 24
     st.session_state.pair_lines = 4
-    st.session_state.all_pairs = load_themes()
+    st.session_state.all_pairs = copy.deepcopy(load_themes())
     st.session_state.custom_deck = []
     st.session_state.current_custom = None
     st.session_state.txt_deck = ""
 
 
-@st.cache_data
-def get_themes() -> list[str]:
-    return sorted(list(st.session_state.all_pairs))
-
-
 # ---- Setup ----
 st.set_page_config(page_title="ニメム", page_icon="🎴", layout="centered")
-
 
 st.title("メモリーゲーム", width="stretch", text_alignment="center")
 st.caption("Jogo da Memória para aprendizado de nihongo.", text_alignment="center")
@@ -63,14 +58,18 @@ def show_found_pairs() -> None:
         st.markdown(f"- {label1.upper()}: **{label2}**", text_alignment="center")
 
 
-def new_game(pairs: list[tuple[str, str]], theme_name: str) -> None:
+def sample_pairs(theme: str, k: int) -> list[tuple[str, str]]:
+    pairs = st.session_state.all_pairs[theme]
+    return random.sample(pairs, k=min(k, len(pairs)))
+
+
+def new_game(pairs: list[tuple[str, str]]) -> None:
     deck = [(p_id, label.upper()) for p_id, pair in enumerate(pairs) for label in pair]
     random.shuffle(deck)
     st.session_state.deck = deck
     st.session_state.size = len(pairs)
     st.session_state.columns = get_columns_size(st.session_state.size)
     st.session_state.pairs = pairs
-    st.session_state.theme_name = theme_name
     st.session_state.state = ["down"] * st.session_state.size * 2
     st.session_state.flipped = []
     st.session_state.moves = 0
@@ -81,21 +80,6 @@ def new_game(pairs: list[tuple[str, str]], theme_name: str) -> None:
     st.session_state.game_over = False
 
 
-@st.cache_data
-def get_theme_max_pairs(theme: str, max_pairs: int = st.session_state.max_pairs) -> int:
-    size = len(st.session_state.all_pairs[theme])
-    return size if size <= max_pairs else max_pairs
-
-
-def validate_custom_deck(deck: list[tuple[str, str]]) -> bool:
-
-    if all(label != "" for pair in deck for label in pair):
-        return True
-    st.warning(
-        f"O conjunto precisa ter no mínimo {st.session_state.min_pairs} pares válidos."
-    )
-    return False
-
 @st.dialog("Upload de pares", position="right")
 def upload_deck():
     uploaded_deck = st.file_uploader(
@@ -104,33 +88,41 @@ def upload_deck():
 
     if uploaded_deck is not None:
         if st.session_state.get("last_uploaded_id") != uploaded_deck.file_id:
-
             processed_uploaded_deck = themeutils.from_txt(uploaded_deck)
 
             if processed_uploaded_deck:
-                time.sleep(0.5)
                 st.toast("Pares importados com sucesso!")
                 if st.session_state.current_custom:
                     del st.session_state.all_pairs[st.session_state.current_custom]
                 st.session_state.current_custom = processed_uploaded_deck["name"]
-                get_themes.clear()
                 st.session_state.all_pairs.update(
-                    {
-                        processed_uploaded_deck["name"]: processed_uploaded_deck[
-                            "pairs"
-                        ]
-                    }
+                    {processed_uploaded_deck["name"]: processed_uploaded_deck["pairs"]}
                 )
                 st.session_state.last_uploaded_id = uploaded_deck.file_id
                 st.rerun()
             else:
-                st.warning('Por favor, envie um conjunto válido.')
-         
+                st.warning("Por favor, envie um conjunto válido.")
+
 
 def format_filename(deck_name: None | str) -> str:
     if deck_name:
         return deck_name.replace(" ", "_").lower()
     return "meus_pares"
+
+
+def clean_custom_deck(deck: list[tuple[str, str]]) -> list[tuple[str, str]]:
+    cleaned = [(a.strip(), b.strip()) for a, b in deck]
+    return [pair for pair in cleaned if any(pair)]
+
+
+def validate_custom_deck(deck: list[tuple[str, str]]) -> bool:
+    if len(deck) >= st.session_state.min_pairs and all(all(pair) for pair in deck):
+        return True
+    st.warning(
+        f"O conjunto precisa ter no mínimo {st.session_state.min_pairs} pares válidos."
+    )
+    return False
+
 
 # ---- Custom Pairs ----
 if st.session_state.add_theme:
@@ -147,13 +139,13 @@ if st.session_state.add_theme:
 
         button[data-testid="stBaseButton-tertiary"]:hover {
         transform: scale(1.15) !important;
-        background-color: transparent !important; 
+        background-color: transparent !important;
     }
 
         </style>
         """
     )
-    
+
     with st.container(horizontal_alignment="center"):
         st.markdown("**Título**", text_alignment="center")
         deck_title = st.text_input(
@@ -165,9 +157,7 @@ if st.session_state.add_theme:
             max_chars=20,
         )
     st.divider()
-    _, col1, col2, _ = st.columns(
-        [1, 1.1, 1.1, 1], vertical_alignment="bottom"
-    )  
+    _, col1, col2, _ = st.columns([1, 1.1, 1.1, 1], vertical_alignment="bottom")
     with col1:
         st.markdown("**Par (A)**", text_alignment="center")
     with col2:
@@ -207,47 +197,46 @@ if st.session_state.add_theme:
             else:
                 st.warning("Limite máximo de pares atingido.")
 
-        if st.button("Criar", type="primary") and validate_custom_deck(
-            st.session_state.custom_deck
-        ):
-            if st.session_state.current_custom:
-                del st.session_state.all_pairs[st.session_state.current_custom]
-            get_themes.clear()
-            deck_name = f"[{deck_title}]"
-            st.session_state.current_custom = deck_name
-            st.session_state.custom_deck = {deck_name: st.session_state.custom_deck}
-            st.session_state.all_pairs.update(st.session_state.custom_deck)
-            st.session_state.txt_deck = themeutils.to_txt(
-                {"name": deck_name, "pairs": st.session_state.custom_deck[deck_name]}
-            )
-            st.session_state.add_theme = False
-            st.session_state.custom_deck = []
-            st.rerun()
+        if st.button("Criar", type="primary"):
+            deck = clean_custom_deck(st.session_state.custom_deck)
+            if validate_custom_deck(deck):
+                if st.session_state.current_custom:
+                    del st.session_state.all_pairs[st.session_state.current_custom]
+                deck_name = f"[{deck_title.strip() or 'Meus pares'}]"
+                st.session_state.current_custom = deck_name
+                st.session_state.all_pairs[deck_name] = deck
+                st.session_state.txt_deck = themeutils.to_txt(
+                    {"name": deck_name, "pairs": deck}
+                )
+                st.session_state.pair_lines = 4
+                st.session_state.add_theme = False
+                st.session_state.custom_deck = []
+                st.rerun()
 
         if st.button("Voltar", type="secondary"):
             st.session_state.add_theme = False
             st.session_state.pair_lines = 4
             st.session_state.custom_deck = []
-            st.rerun()     
+            st.rerun()
 
         st.stop()
 
 
-# ---- Intro Screen----
+# ---- Intro Screen ----
 if "start" not in st.session_state:
     _, center, _ = st.columns([1, 3, 1])
     with center:
         col_theme, col_pairs = st.columns([2, 1])
         with col_theme:
             initial_theme = st.selectbox(
-                label="Temas", options=get_themes(), on_change="rerun"
+                label="Temas", options=sorted(st.session_state.all_pairs), on_change="rerun"
             )
         with col_pairs:
             initial_pairs = st.number_input(
                 label="Pares",
                 value=4,
                 min_value=4,
-                max_value=get_theme_max_pairs(initial_theme),
+                max_value=max(4, min(len(st.session_state.all_pairs[initial_theme]), st.session_state.max_pairs)),
                 width=130,
             )
 
@@ -255,12 +244,7 @@ if "start" not in st.session_state:
         with center_button:
             if st.button("Começar", type="primary", width=300):
                 st.session_state.current_theme = initial_theme
-                new_game(
-                    random.sample(
-                        st.session_state.all_pairs[initial_theme], k=initial_pairs
-                    ),
-                    st.session_state.current_theme,
-                ) 
+                new_game(sample_pairs(initial_theme, initial_pairs))
                 st.session_state.start = True
                 st.rerun()
 
@@ -288,7 +272,7 @@ if "start" not in st.session_state:
                 upload_deck()
 
 else:
-    # ---- Win Screen----
+    # ---- Win Screen ----
     with st.container(horizontal_alignment="center"):
         if st.session_state.game_over:
             duration = st.session_state.finished_at - st.session_state.started_at
@@ -301,14 +285,8 @@ else:
 
             show_found_pairs()
 
-            if st.button(f":material/replay: Jogar novamente", type="primary"):
-                new_game(
-                    random.sample(
-                        st.session_state.all_pairs[st.session_state.current_theme],
-                        k=st.session_state.size,
-                    ),
-                    st.session_state.current_theme,
-                )
+            if st.button(":material/replay: Jogar novamente", type="primary"):
+                new_game(sample_pairs(st.session_state.current_theme, st.session_state.size))
                 st.rerun()
             st.stop()
 
@@ -316,13 +294,7 @@ else:
     ctrl_a, ctrl_b = st.columns(2)
     with ctrl_a:
         if st.button(":material/replay: Reiniciar", width="stretch", type="tertiary"):
-            new_game(
-                random.sample(
-                    st.session_state.all_pairs[st.session_state.current_theme],
-                    k=st.session_state.size,
-                ),
-                st.session_state.current_theme,
-            )
+            new_game(sample_pairs(st.session_state.current_theme, st.session_state.size))
             st.rerun()
     with ctrl_b:
         if st.button(
@@ -340,9 +312,7 @@ else:
         end = st.session_state.finished_at or time.time()
         st.metric("Tempo", f"{int(end - st.session_state.started_at)}s")
 
-    with st.container(
-        horizontal=True,
-    ):
+    with st.container(horizontal=True):
         c1, c2, c3 = st.columns(3, width="stretch")
         c1.metric("Pares", f"{st.session_state.matched} / {st.session_state.size}")
         c2.metric("Jogadas", st.session_state.moves)
@@ -367,36 +337,35 @@ else:
                 ):
                     clicked = i
 
-    # ---- Click Handling ----
     if clicked is not None:
-        if len(st.session_state.flipped) == 2:
-            a, b = st.session_state.flipped
-            st.session_state.state[a] = st.session_state.state[b] = "down"
-            st.session_state.flipped = []
+        flipped = st.session_state.flipped
+
+        # Third click: un-flip the previous two non-matching cards first
+        if len(flipped) == 2:
+            st.session_state.state[flipped[0]] = "down"
+            st.session_state.state[flipped[1]] = "down"
+            flipped.clear()
+
         st.session_state.state[clicked] = "up"
-        st.session_state.flipped.append(clicked)
-        if len(st.session_state.flipped) == 2:
+        flipped.append(clicked)
+
+        if len(flipped) == 2:
             st.session_state.moves += 1
+            a, b = flipped
+            if st.session_state.deck[a][0] == st.session_state.deck[b][0]:  # Pair
+                st.session_state.state[a] = "gone"
+                st.session_state.state[b] = "gone"
+                st.session_state.matched += 1
+                st.session_state.found.appendleft(
+                    st.session_state.pairs[st.session_state.deck[a][0]]
+                )
+                flipped.clear()
+                if st.session_state.matched == st.session_state.size:  # Win
+                    st.session_state.game_over = True
+                    st.session_state.finished_at = time.time()
         st.rerun()
-
-    # ---- Resolve ----
-    if len(st.session_state.flipped) == 2:
-        a, b = st.session_state.flipped
-        if st.session_state.deck[a][0] == st.session_state.deck[b][0]:  # Pair
-            st.session_state.state[a] = st.session_state.state[b] = "gone"
-            st.session_state.matched += 1
-            st.session_state.found.appendleft(
-                st.session_state.pairs[st.session_state.deck[a][0]]
-            )
-            st.session_state.flipped = []
-            if st.session_state.matched == st.session_state.size:  # Win condition
-                st.session_state.game_over = True
-                st.session_state.finished_at = time.time()
-
-            st.rerun()
-
     # ---- Found Log ----
     st.divider()
     if st.session_state.found:
-        st.subheader(f"Pares encontrados")
+        st.subheader("Pares encontrados")
         show_found_pairs()
