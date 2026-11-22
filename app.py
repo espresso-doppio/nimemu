@@ -340,7 +340,6 @@ else:
     if clicked is not None:
         flipped = st.session_state.flipped
 
-        # Third click: un-flip the previous two non-matching cards first
         if len(flipped) == 2:
             st.session_state.state[flipped[0]] = "down"
             st.session_state.state[flipped[1]] = "down"
