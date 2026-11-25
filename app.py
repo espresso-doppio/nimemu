@@ -35,8 +35,8 @@ if "configs" not in st.session_state:
 # ---- Setup ----
 st.set_page_config(page_title="ニメム", page_icon="🎴", layout="centered")
 
-st.title("メモリーゲーム", width="stretch", text_alignment="center")
-st.caption("Jogo da Memória para aprendizado de nihongo.", text_alignment="center")
+st.title("ニメム", width="stretch", text_alignment="center")
+st.caption("メモリーゲーム para aprendizado de japonês.", text_alignment="center")
 with st.bottom:
     st.caption("Versão para PC", text_alignment="center")
 
