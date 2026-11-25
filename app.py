@@ -362,6 +362,7 @@ else:
                 if st.session_state.matched == st.session_state.size:  # Win
                     st.session_state.game_over = True
                     st.session_state.finished_at = time.time()
+                    st.rerun()
         st.rerun()
     # ---- Found Log ----
     st.divider()
