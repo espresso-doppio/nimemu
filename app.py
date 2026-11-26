@@ -305,21 +305,21 @@ else:
             st.rerun()
 
     # ---- Status Bar ----
-    @st.fragment(run_every=1.0)
-    def timer():
-        if st.session_state.started_at is None:
-            st.metric("Tempo", "—")
-            return
-        end = st.session_state.finished_at or time.time()
-        st.metric("Tempo", f"{int(end - st.session_state.started_at)}s")
+    if not st.session_state.game_over:
+        @st.fragment(run_every=1.0)
+        def timer():
+            if st.session_state.started_at is None:
+                st.metric("Tempo", "—")
+                return
+            end = st.session_state.finished_at or time.time()
+            st.metric("Tempo", f"{int(end - st.session_state.started_at)}s")
 
     with st.container(horizontal=True):
         c1, c2, c3 = st.columns(3, width="stretch")
         c1.metric("Pares", f"{st.session_state.matched} / {st.session_state.size}")
         c2.metric("Jogadas", st.session_state.moves)
         with c3:
-            if not st.session_state.game_over: # Trying to figure out why the screen turns white after some wins 
-                timer()
+            timer()
 
     # ---- Board ----
     clicked: int | None = None
