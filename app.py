@@ -274,6 +274,7 @@ if "start" not in st.session_state:
 else:
     # ---- Win Screen ----
     with st.container(horizontal_alignment="center"):
+
         if st.session_state.game_over:
             duration = st.session_state.finished_at - st.session_state.started_at
             st.title("Vitória!", text_alignment="center")
@@ -317,7 +318,8 @@ else:
         c1.metric("Pares", f"{st.session_state.matched} / {st.session_state.size}")
         c2.metric("Jogadas", st.session_state.moves)
         with c3:
-            timer()
+            if not st.session_state.game_over: # Trying to figure out why the screen turns white after some wins 
+                timer()
 
     # ---- Board ----
     clicked: int | None = None
