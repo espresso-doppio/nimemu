@@ -10,6 +10,7 @@ from load_css import load_css
 
 load_css()
 
+
 @st.cache_data
 def load_themes() -> dict[str, list[tuple[str, str]]]:
     themes_dir = Path(__file__).parent / "themes"
@@ -70,7 +71,7 @@ def new_game(pairs: list[tuple[str, str]]) -> None:
     st.session_state.size = len(pairs)
     st.session_state.columns = get_columns_size(st.session_state.size)
     st.session_state.pairs = pairs
-    st.session_state.state = ["down"] * st.session_state.size * 2
+    st.session_state.state = ["down"] * (st.session_state.size * 2)
     st.session_state.flipped = []
     st.session_state.moves = 0
     st.session_state.matched = 0
@@ -80,10 +81,46 @@ def new_game(pairs: list[tuple[str, str]]) -> None:
     st.session_state.game_over = False
 
 
+def handle_card_click(i: int) -> None:
+    if st.session_state.game_over or st.session_state.state[i] != "down":
+        return
+
+    flipped = st.session_state.flipped
+
+    if len(flipped) == 2:
+        st.session_state.state[flipped[0]] = "down"
+        st.session_state.state[flipped[1]] = "down"
+        flipped.clear()
+
+    st.session_state.state[i] = "up"
+    flipped.append(i)
+
+    if len(flipped) == 2:
+        st.session_state.moves += 1
+        a, b = flipped
+
+        if st.session_state.deck[a][0] == st.session_state.deck[b][0]:  # Pair
+            st.session_state.state[a] = "gone"
+            st.session_state.state[b] = "gone"
+            st.session_state.matched += 1
+            st.session_state.found.appendleft(
+                st.session_state.pairs[st.session_state.deck[a][0]]
+            )
+            flipped.clear()
+
+            if st.session_state.matched == st.session_state.size:  # Win
+                st.session_state.finished_at = time.time()
+                st.session_state.game_over = True
+
+
 @st.dialog("Upload de pares", position="right")
 def upload_deck():
     uploaded_deck = st.file_uploader(
-        "deck_uploader", max_upload_size=1, type="txt", width="stretch", label_visibility="collapsed"
+        "deck_uploader",
+        max_upload_size=1,
+        type="txt",
+        width="stretch",
+        label_visibility="collapsed",
     )
 
     if uploaded_deck is not None:
@@ -236,7 +273,13 @@ if "start" not in st.session_state:
                 label="Pares",
                 value=4,
                 min_value=4,
-                max_value=max(4, min(len(st.session_state.all_pairs[initial_theme]), st.session_state.max_pairs)),
+                max_value=max(
+                    4,
+                    min(
+                        len(st.session_state.all_pairs[initial_theme]),
+                        st.session_state.max_pairs,
+                    ),
+                ),
                 width=130,
             )
 
@@ -268,13 +311,14 @@ if "start" not in st.session_state:
                 mime="text/plain",
             )
 
-            if st.button("Carregar pares", icon=":material/upload:", type="secondary", width=300):
+            if st.button(
+                "Carregar pares", icon=":material/upload:", type="secondary", width=300
+            ):
                 upload_deck()
 
 else:
     # ---- Win Screen ----
     with st.container(horizontal_alignment="center"):
-
         if st.session_state.game_over:
             duration = st.session_state.finished_at - st.session_state.started_at
             st.title("Vitória!", text_alignment="center")
@@ -287,7 +331,11 @@ else:
             show_found_pairs()
 
             if st.button(":material/replay: Jogar novamente", type="primary"):
-                new_game(sample_pairs(st.session_state.current_theme, st.session_state.size))
+                new_game(
+                    sample_pairs(
+                        st.session_state.current_theme, st.session_state.size
+                    )
+                )
                 st.rerun()
             st.stop()
 
@@ -299,7 +347,9 @@ else:
             st.rerun()
     with ctrl_b:
         if st.button(
-            ":material/settings: Configurar novo jogo", width="stretch", type="tertiary"
+            ":material/settings: Configurar novo jogo",
+            width="stretch",
+            type="tertiary",
         ):
             del st.session_state.start
             st.rerun()
@@ -321,7 +371,6 @@ else:
             timer()
 
     # ---- Board ----
-    clicked: int | None = None
     cols = st.columns(st.session_state.columns)
     for i, (_, label) in enumerate(st.session_state.deck):
         s = st.session_state.state[i]
@@ -330,41 +379,15 @@ else:
         )
         with cols[i % st.session_state.columns]:
             with st.container(key=f"{s}_{i}"):
-                if st.button(
+                st.button(
                     text,
                     key=f"card_{i}",
                     disabled=disabled,
                     use_container_width=True,
-                ):
-                    clicked = i
-
-    if clicked is not None:
-        flipped = st.session_state.flipped
-
-        if len(flipped) == 2:
-            st.session_state.state[flipped[0]] = "down"
-            st.session_state.state[flipped[1]] = "down"
-            flipped.clear()
-
-        st.session_state.state[clicked] = "up"
-        flipped.append(clicked)
-
-        if len(flipped) == 2:
-            st.session_state.moves += 1
-            a, b = flipped
-            if st.session_state.deck[a][0] == st.session_state.deck[b][0]:  # Pair
-                st.session_state.state[a] = "gone"
-                st.session_state.state[b] = "gone"
-                st.session_state.matched += 1
-                st.session_state.found.appendleft(
-                    st.session_state.pairs[st.session_state.deck[a][0]]
+                    on_click=handle_card_click,
+                    args=(i,),
                 )
-                flipped.clear()
-                if st.session_state.matched == st.session_state.size:  # Win
-                    st.session_state.finished_at = time.time()
-                    st.session_state.game_over = True
-                    
-        st.rerun()
+
     # ---- Found Log ----
     st.divider()
     if st.session_state.found:
