@@ -321,7 +321,7 @@ else:
     with st.container(horizontal_alignment="center"):
         if st.session_state.game_over:
             duration = st.session_state.finished_at - st.session_state.started_at
-            st.title("Vitória!", text_alignment="center")
+            st.title("クリア！", text_alignment="center")
             a, b, c = st.columns(3)
             efficiency = duration / st.session_state.size
             a.metric("Tempo", f"{duration:.2f}s")
