@@ -318,26 +318,25 @@ if "start" not in st.session_state:
 
 else:
     # ---- Win Screen ----
-    with st.container(horizontal_alignment="center"):
-        if st.session_state.game_over:
-            duration = st.session_state.finished_at - st.session_state.started_at
-            st.title("クリア！", text_alignment="center")
-            a, b, c = st.columns(3)
-            efficiency = duration / st.session_state.size
-            a.metric("Tempo", f"{duration:.2f}s")
-            b.metric("Jogadas", st.session_state.moves)
-            c.metric("Eficiência", f"{efficiency:.2f}s/par")
+    if st.session_state.game_over:
+        duration = st.session_state.finished_at - st.session_state.started_at
+        st.title("クリア！", text_alignment="center")
+        a, b, c = st.columns(3)
+        efficiency = duration / st.session_state.size
+        a.metric("Tempo", f"{duration:.2f}s")
+        b.metric("Jogadas", st.session_state.moves)
+        c.metric("Eficiência", f"{efficiency:.2f}s/par")
 
-            show_found_pairs()
+        show_found_pairs()
 
-            if st.button(":material/replay: Jogar novamente", type="primary"):
-                new_game(
-                    sample_pairs(
-                        st.session_state.current_theme, st.session_state.size
-                    )
+        if st.button(":material/replay: Jogar novamente", type="primary"):
+            new_game(
+                sample_pairs(
+                    st.session_state.current_theme, st.session_state.size
                 )
-                st.rerun()
-            st.stop()
+            )
+            st.rerun()
+        st.stop()
 
     # ---- In-Game Controls ----
     ctrl_a, ctrl_b = st.columns(2)
